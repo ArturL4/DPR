@@ -14,29 +14,47 @@ from plotly.subplots import make_subplots
 sns.set_theme()
 
 
-X_AXIS = np.arange(-20,20, 0.001)
+X_AXIS = np.arange(-20, 20, 0.001)
 
 mean_1 = st.slider("Mean of Orange graph", 0.25, -5.0, 5.0)
 variance_1 = st.slider("Variance of orange graph", 2.0, 2.0, 6.0)
-h_1 = norm.pdf(X_AXIS,mean_1, variance_1)
+h_1 = norm.pdf(X_AXIS, mean_1, variance_1)
 
 mean_fixed = 5.0
 variance_fixed = 1.5
 h_2 = norm.pdf(X_AXIS, mean_fixed, variance_fixed)
 
 fig, ax = plt.subplots()
-ax.plot(X_AXIS,h_1, c="orange")
+ax.plot(X_AXIS, h_1, c="orange")
 ax.plot(X_AXIS, h_2, c="b")
 idx = np.argwhere(np.diff(np.sign(h_2 - h_1))).flatten()
-if len(idx) <=1:
+if len(idx) <= 1:
     idx = np.append(idx, 31511)
 
 max_val = np.max(np.maximum(h_1, h_2))
-plt.fill_between(X_AXIS[idx[0]:idx[1]],h_1[idx[0]:idx[1]], h_2[idx[0]:idx[1]], hatch='\\', alpha=0.2, linewidth=0.1, facecolor="b", edgecolor="b")
-plt.fill_between(X_AXIS[idx[0]:idx[1]],np.zeros_like(h_1[idx[0]:idx[1]]), h_1[idx[0]:idx[1]], hatch='\\', alpha=0.2, linewidth=0.1, facecolor="orange", edgecolor="orange")
+plt.fill_between(
+    X_AXIS[idx[0] : idx[1]],
+    h_1[idx[0] : idx[1]],
+    h_2[idx[0] : idx[1]],
+    hatch="\\",
+    alpha=0.2,
+    linewidth=0.1,
+    facecolor="b",
+    edgecolor="b",
+)
+plt.fill_between(
+    X_AXIS[idx[0] : idx[1]],
+    np.zeros_like(h_1[idx[0] : idx[1]]),
+    h_1[idx[0] : idx[1]],
+    hatch="\\",
+    alpha=0.2,
+    linewidth=0.1,
+    facecolor="orange",
+    edgecolor="orange",
+)
 
 plt.legend([r"$H_0$", r"$H_1$", r"$P_{D}$", r"$P_{FA}$"])
-ax.vlines(X_AXIS[idx], -.01, max_val, color="r", linestyles="dashed", linewidth=0.3)
+ax.vlines(X_AXIS[idx], -0.01, max_val, color="r", linestyles="dashed", linewidth=0.3)
 st.write(fig)
 
 
@@ -47,25 +65,23 @@ import numpy as np
 fig = go.Figure()
 
 
-
 trace1 = go.Scatter(
-            visible=True,
-            line=dict(color="orange", width=3),
-            name="Noise",
-            x=np.arange(0, 10, 0.01),
-            y=norm.pdf(np.arange(0, 10, 0.01), 4, 1.4))
+    visible=True,
+    line=dict(color="orange", width=3),
+    name="Noise",
+    x=np.arange(0, 10, 0.01),
+    y=norm.pdf(np.arange(0, 10, 0.01), 4, 1.4),
+)
 
 trace2 = go.Scatter(
-        name="Target",
-        line=dict(width=3),
-        x=np.arange(0, 10, 0.01),
-        y=norm.pdf(np.arange(0, 10, 0.01), 7, 1))
+    name="Target", line=dict(width=3), x=np.arange(0, 10, 0.01), y=norm.pdf(np.arange(0, 10, 0.01), 7, 1)
+)
 
 fig.add_trace(trace1)
-    
+
 fig.add_trace(trace2)
 
-'''
+"""
 # Add traces, one for each slider step
 for step in np.arange(0, 5, 0.1):
     fig.add_trace(
@@ -106,7 +122,6 @@ sliders = [dict(
 
 fig.update_layout()
 
-'''
+"""
 fig.update_layout()
 st.write(fig)
-

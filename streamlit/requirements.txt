@@ -4,3 +4,5 @@ streamlit
 plotly
 vega_datasets
 pandas
+scipy
+seaborn
