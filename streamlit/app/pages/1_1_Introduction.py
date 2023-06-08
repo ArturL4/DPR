@@ -51,6 +51,8 @@ Row Rum: $50 + 5 = 55$ classified salmons, $10 + 35 = 45$ classified sea bass
 matrix sum: $50 + 10 + 5 + 35 = 100$ overall fishes"""
 )
 
+st.markdown("---")
+
 
 st.subheader("1.4.1 Normalization and abbrevation of Confusion matrix")
 
@@ -62,11 +64,13 @@ measuring the classifiers performance is not that easy given some absolute value
 
 st.markdown("To tackle this problem, we can simply normalize our existing confusion matrix.")
 
-st.markdown(r"""The easiest way you can think of is probably the normalization over the whole count.
+st.markdown(
+    r"""The easiest way you can think of is probably the normalization over the whole count.
 
 To mathematically express what i mean, given the absolute appearance of $N$ distinct objects/classifications we can express a relative appearance by simply dividing the different counts:
-""")
-            
+"""
+)
+
 col1, col2, col3 = st.columns(3)
 
 with col2:
@@ -75,6 +79,7 @@ with col2:
 st.markdown("This gives us a the so called :red[marginal distribution].")
 st.write(confusion_matrix_plot(50, 5, 10, 35, "salmon", "sea bass", normalize="all")[0])
 
+st.markdown("---")
 
 
 st.markdown(

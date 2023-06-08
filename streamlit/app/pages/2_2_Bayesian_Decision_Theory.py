@@ -8,11 +8,104 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import requests
+import json
+from streamlit_lottie import st_lottie
+
 import plotly.express as px
 from plotly.subplots import make_subplots
 
 sns.set_theme()
 
+
+st.subheader("Bayesian Theorem")
+st.markdown(
+    """Now after we got small insights into performance measurement 
+(and of course other basics :angel:) we want now to take a closer look into 
+the most fundamental theorem in probability theory, which is used almost in 
+every classifier."""
+)
+
+st.markdown("As you might have guessed, i'm talking about bayes theorem")
+
+_, mid, _ =  st.columns(3)
+
+with mid:
+    st.markdown(r"$P(\omega_i | x) = \frac{p(x|\omega_i)}{p(x)}P(\omega_i)$")
+
+st.markdown(""" where:
+1. $P(\omega = \omega_i) = P(\omega_i)$: a priori probability
+2. $p(x|\omega=\omega_i) = p(x|\omega_i)$: class conditional PDF of x or likelihood
+3. $p(x, \omega_i)$: joint PDF
+4. $p(x)$: marginal PDF of x, called evidence
+5. $P(\omega_i | x)$: a posterior probability, class probability after measurement of x
+""")
+st.markdown("---")
+
+st.markdown("To get an idea what is even meant with the above abbrevation, let's have a look onto an example")
+st.markdown("""Let's assume we got two classes of fish we want to distinguish. One shall be Salmon, the other Sea bass.
+Furthermore we make the simplified assumption, that you can distinguish those fish with ONE single feature, e.g. the length.""")
+            
+
+seabass_mean, seabass_var = 30, 10
+salmon_mean, salmon_var = 80, 25
+X_AXIS = np.arange(0,150, 0.002)
+
+seabass_samples = np.random.normal(seabass_mean, seabass_var, 100)
+salmon_samples = np.random.normal(salmon_mean, salmon_var, 100)
+seabass_dis = norm.pdf(X_AXIS, seabass_mean, seabass_var)
+salmon_dis = norm.pdf(X_AXIS, salmon_mean, salmon_var)
+
+fig, ax = plt.subplots()
+
+ax.vlines(salmon_samples, -0.001, 0.001, color="r")
+ax.vlines(seabass_samples, -0.001, 0.001, color="b")
+ax.plot(X_AXIS, seabass_dis, color="b", linestyle="dashed")
+ax.plot(X_AXIS, salmon_dis, color="r", linestyle="dashed")
+ax.set_xlabel("Length in [cm]")
+ax.set_ylabel(r"Likelihood $P(x | \omega)$")
+plt.legend(["Salmon", "Sea bass"])
+st.write(fig)
+
+st.markdown("Furthermore we say we are at a point on earth where the prior probability $P(\omega)$ is equal for both fish (how lucky...)")
+
+st.markdown("""Enough theory, let's catch a fish and measure it!""")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("...")
+with col2:
+    fish_url = requests.get("https://assets7.lottiefiles.com/packages/lf20_6wvpi7jz.json")  
+    fish_json = dict()
+    fish_json = fish_url.json()
+    st_lottie(fish_json,
+              height=200,  
+          width=400,
+          # speed of animation
+          speed=1,  
+          # means the animation will run forever like a gif, and not as a still image
+          loop=True,  
+          # quality of elements used in the animation, other values are "low" and "medium"
+          quality='high',)
+    
+st.markdown("Amazing!! The fish is 60cm long")
+fig, ax = plt.subplots()
+
+ax.vlines(salmon_samples, -0.001, 0.001, color="r")
+ax.vlines(seabass_samples, -0.001, 0.001, color="b")
+ax.vlines(60, -0.001, 0.015, color="g")
+ax.plot(X_AXIS, seabass_dis, color="b", linestyle="dashed")
+ax.plot(X_AXIS, salmon_dis, color="r", linestyle="dashed")
+ax.set_xlabel("Length in [cm]")
+ax.set_ylabel(r"Likelihood $P(x | \omega)$")
+plt.legend(["Salmon", "Sea bass", "Caught fish"])
+st.write(fig)
+
+st.markdown("""Plotting the newly caught fish into our plot from beforehand, we probably directly see, that it might will be a salmon, but what is the probability given the length that it is going to be a salmon?
+For this we calculate the so called :red[a posterior $P(\omega | x)$] using bayes theorem.
+""")
+
+
+st.markdown("---")
 
 X_AXIS = np.arange(-20, 20, 0.001)
 
