@@ -1,10 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
+from io import BytesIO
 
 
-def confusion_matrix_plot(tp, fp, fn, tn, class1, class2, normalize=None):
-    fig, ax = plt.subplots()
+def confusion_matrix_plot(tp, fp, fn, tn, class1, class2, normalize=None, figsize=(15,8)):
+    fig, ax = plt.subplots(figsize=figsize)
     conf_mat = np.array([[tp, fp], [fn, tn]], dtype="float")
 
     if normalize == "true":

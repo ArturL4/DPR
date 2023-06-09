@@ -1,21 +1,28 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
-import streamlit as st
-from scipy.stats import norm
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-import requests
 import json
+import math
+from collections import namedtuple
+
+import altair as alt
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import requests
+import seaborn as sns
+from plotly.subplots import make_subplots
+from scipy.stats import norm
 from streamlit_lottie import st_lottie
 
-import plotly.express as px
-from plotly.subplots import make_subplots
+from utils.utils import confusion_matrix_plot
+
+import streamlit as st
 
 sns.set_theme()
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
 
 
 st.subheader("Bayesian Theorem")
@@ -28,28 +35,32 @@ every classifier."""
 
 st.markdown("As you might have guessed, i'm talking about bayes theorem")
 
-_, mid, _ =  st.columns(3)
+_, mid, _ = st.columns(3)
 
 with mid:
     st.markdown(r"$P(\omega_i | x) = \frac{p(x|\omega_i)}{p(x)}P(\omega_i)$")
 
-st.markdown(""" where:
+st.markdown(
+    """ where:
 1. $P(\omega = \omega_i) = P(\omega_i)$: a priori probability
 2. $p(x|\omega=\omega_i) = p(x|\omega_i)$: class conditional PDF of x or likelihood
 3. $p(x, \omega_i)$: joint PDF
 4. $p(x)$: marginal PDF of x, called evidence
 5. $P(\omega_i | x)$: a posterior probability, class probability after measurement of x
-""")
+"""
+)
 st.markdown("---")
 
 st.markdown("To get an idea what is even meant with the above abbrevation, let's have a look onto an example")
-st.markdown("""Let's assume we got two classes of fish we want to distinguish. One shall be Salmon, the other Sea bass.
-Furthermore we make the simplified assumption, that you can distinguish those fish with ONE single feature, e.g. the length.""")
-            
+st.markdown(
+    """Let's assume we got two classes of fish we want to distinguish. One shall be Salmon, the other Sea bass.
+Furthermore we make the simplified assumption, that you can distinguish those fish with ONE single feature, e.g. the length."""
+)
+
 
 seabass_mean, seabass_var = 30, 10
 salmon_mean, salmon_var = 80, 25
-X_AXIS = np.arange(0,150, 0.002)
+X_AXIS = np.arange(0, 150, 0.002)
 
 seabass_samples = np.random.normal(seabass_mean, seabass_var, 100)
 salmon_samples = np.random.normal(salmon_mean, salmon_var, 100)
@@ -67,26 +78,30 @@ ax.set_ylabel(r"Likelihood $P(x | \omega)$")
 plt.legend(["Salmon", "Sea bass"])
 st.write(fig)
 
-st.markdown("Furthermore we say we are at a point on earth where the prior probability $P(\omega)$ is equal for both fish (how lucky...)")
+st.markdown(
+    "Furthermore we say we are at a point on earth where the prior probability $P(\omega)$ is equal for both fish (how lucky...)"
+)
 
 st.markdown("""Enough theory, let's catch a fish and measure it!""")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("...")
 with col2:
-    fish_url = requests.get("https://assets7.lottiefiles.com/packages/lf20_6wvpi7jz.json")  
+    fish_url = requests.get("https://assets7.lottiefiles.com/packages/lf20_6wvpi7jz.json")
     fish_json = dict()
     fish_json = fish_url.json()
-    st_lottie(fish_json,
-              height=200,  
-          width=400,
-          # speed of animation
-          speed=1,  
-          # means the animation will run forever like a gif, and not as a still image
-          loop=True,  
-          # quality of elements used in the animation, other values are "low" and "medium"
-          quality='high',)
-    
+    st_lottie(
+        fish_json,
+        height=200,
+        width=400,
+        # speed of animation
+        speed=1,
+        # means the animation will run forever like a gif, and not as a still image
+        loop=True,
+        # quality of elements used in the animation, other values are "low" and "medium"
+        quality="high",
+    )
+
 st.markdown("Amazing!! The fish is 60cm long")
 fig, ax = plt.subplots()
 
@@ -100,12 +115,54 @@ ax.set_ylabel(r"Likelihood $P(x | \omega)$")
 plt.legend(["Salmon", "Sea bass", "Caught fish"])
 st.write(fig)
 
-st.markdown("""Plotting the newly caught fish into our plot from beforehand, we probably directly see, that it might will be a salmon, but what is the probability given the length that it is going to be a salmon?
+st.markdown(
+    """Plotting the newly caught fish into our plot from beforehand, we probably directly see, that it might will be a salmon, but what is the probability given the length that it is going to be a salmon?
 For this we calculate the so called :red[a posterior $P(\omega | x)$] using bayes theorem.
-""")
+"""
+)
 
 
 st.markdown("---")
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+
+st.subheader("2.2. Minimum Bayesian risk decision")
+
+st.markdown(
+    r"""After we've learned about the confusion matrix we might be happy thinking ... 
+Nice i can measure the performance of my classifier! 
+But hold on... What if i got like 100 different classes i want to measure my classifier's performance? Do i really need to scan the 
+$100\times 100$ matrix and checkout every cell, interprete and recognize other values?"""
+)
+
+st.markdown("""We rather want to have a scalar to measure the overall performance of the Classifier. In this case we can calculate the overall error rate.
+This can be done by first computing the confusion matrix, use joint normalization""", 
+help=r"""Do you remember? :angel:
+
+It was simply $P_j = P(\omega = \omega_j) = \frac{n_{:j}}{N}$""")
+
+#st.radio(options=list, help="tooltip_text")
+st.markdown(
+    r"""
+And disentangle the overall sum of the probabilities. All diagonal elements represent correctly classified, while every other cell is some misclassification.
+$$
+\begin{array}{cccc}
+   1 &= \sum_i \sum_j P_{ij} &= \sum_i P_{ii} &+ \sum \sum_{i\neq j} P_{ij} \\
+    & &= \underbrace{P(\^{\omega} = \omega)}_{\text{recognition rate}} &+ \underbrace{P(\^{\omega} \neq \omega)}_\text{error rate (ER)} \\
+\end{array}
+$$"""
+)
+
+st.markdown(r" The error rate $0 \leq ER \leq 1$ is the average over all error.")
+
+st.markdown("""Ok this is already much more convinient... But this comes with a price, we can't distinguish anymore,
+ where the error actually comes from. Which misclassification is causing the huge impact at our error rate
+
+""")
+
 
 X_AXIS = np.arange(-20, 20, 0.001)
 
@@ -151,8 +208,8 @@ ax.vlines(X_AXIS[idx], -0.01, max_val, color="r", linestyles="dashed", linewidth
 st.write(fig)
 
 
-import plotly.graph_objects as go
 import numpy as np
+import plotly.graph_objects as go
 
 # Create figure
 fig = go.Figure()

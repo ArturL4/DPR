@@ -1,10 +1,10 @@
-import streamlit as st
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-
-
 from utils.utils import confusion_matrix_plot
+from io import BytesIO
+
+import streamlit as st
 
 sns.set_theme()
 
@@ -33,7 +33,7 @@ To have an illustration let's have a look onto the following case:
 - c = 2 classes, $\omega_1 =$ salmon, $\omega_2 =$ sea bass.
 """
 )
-conf_fig, _ = confusion_matrix_plot(50, 5, 10, 35, "salmon", "sea bass", normalize=None)
+conf_fig, _ = confusion_matrix_plot(50, 5, 10, 35, "salmon", "sea bass", normalize=None, figsize=(4,3))
 st.write(conf_fig)
 st.markdown(
     """
@@ -76,11 +76,10 @@ col1, col2, col3 = st.columns(3)
 with col2:
     st.write(r"$P_j = P(\omega = \omega_j) = \frac{n_{:j}}{N}$")
 
-st.markdown("This gives us a the so called :red[marginal distribution].")
-st.write(confusion_matrix_plot(50, 5, 10, 35, "salmon", "sea bass", normalize="all")[0])
+st.markdown("This gives us a the so called :red[joint probabilities].")
+st.pyplot(confusion_matrix_plot(50, 5, 10, 35, "salmon", "sea bass", normalize="all", figsize=(4,3))[0])
 
 st.markdown("---")
-
 
 st.markdown(
     r"""Now we can do much more with the confusion matrix. As we've seen we worked with absolute values for now. This might be not the most convinient way to measure performance of a classifier (e.g. accuracy is given with probabilities).
