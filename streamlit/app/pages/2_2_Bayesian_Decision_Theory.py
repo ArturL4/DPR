@@ -144,7 +144,6 @@ help=r"""Do you remember? :angel:
 
 It was simply $P_j = P(\omega = \omega_j) = \frac{n_{:j}}{N}$""")
 
-#st.radio(options=list, help="tooltip_text")
 st.markdown(
     r"""
 And disentangle the overall sum of the probabilities. All diagonal elements represent correctly classified, while every other cell is some misclassification.
@@ -159,119 +158,224 @@ $$"""
 st.markdown(r" The error rate $0 \leq ER \leq 1$ is the average over all error.")
 
 st.markdown("""Ok this is already much more convinient... But this comes with a price, we can't distinguish anymore,
- where the error actually comes from. Which misclassification is causing the huge impact at our error rate
+ where the error actually comes from. Which misclassification is causing the huge impact at our error rate and also can't adjust the classification to our needs.
 
+ That's where we introduce something new: :red[The loss term].
+
+ But first a small example to get the idea why we want to include the loss.
+
+ Assume we got a food shop. We are using a classifier to predict, whether our food is
+ 1. Still good
+ 2. Already becoming bad
 """)
+            
 
 
-X_AXIS = np.arange(-20, 20, 0.001)
+st.markdown("What would be more problematic when predicting wrong? Either Good food which was stated to be bad and put to the garbage, or bad food which is said to be good and sold to some costumer?")
 
-mean_1 = st.slider("Mean of Orange graph", 0.25, -5.0, 5.0)
-variance_1 = st.slider("Variance of orange graph", 2.0, 2.0, 6.0)
-h_1 = norm.pdf(X_AXIS, mean_1, variance_1)
+col1, col2 = st.columns(2)
+with col1:
+    st.button("Wasting good food is terrible! :astonished:", key="button1")
+with col2:
+    st.button("Consuming bad food will probably lead to some stomach pain. :dizzy_face:", key="button2")
 
-mean_fixed = 5.0
-variance_fixed = 1.5
-h_2 = norm.pdf(X_AXIS, mean_fixed, variance_fixed)
+if "button1" not in st.session_state:
+    st.session_state["button1"] = False
 
-fig, ax = plt.subplots()
-ax.plot(X_AXIS, h_1, c="orange")
-ax.plot(X_AXIS, h_2, c="b")
-idx = np.argwhere(np.diff(np.sign(h_2 - h_1))).flatten()
-if len(idx) <= 1:
-    idx = np.append(idx, 31511)
-
-max_val = np.max(np.maximum(h_1, h_2))
-plt.fill_between(
-    X_AXIS[idx[0] : idx[1]],
-    h_1[idx[0] : idx[1]],
-    h_2[idx[0] : idx[1]],
-    hatch="\\",
-    alpha=0.2,
-    linewidth=0.1,
-    facecolor="b",
-    edgecolor="b",
-)
-plt.fill_between(
-    X_AXIS[idx[0] : idx[1]],
-    np.zeros_like(h_1[idx[0] : idx[1]]),
-    h_1[idx[0] : idx[1]],
-    hatch="\\",
-    alpha=0.2,
-    linewidth=0.1,
-    facecolor="orange",
-    edgecolor="orange",
-)
-
-plt.legend([r"$H_0$", r"$H_1$", r"$P_{D}$", r"$P_{FA}$"])
-ax.vlines(X_AXIS[idx], -0.01, max_val, color="r", linestyles="dashed", linewidth=0.3)
-st.write(fig)
+if "button2" not in st.session_state:
+    st.session_state["button2"] = False
 
 
-import numpy as np
-import plotly.graph_objects as go
-
-# Create figure
-fig = go.Figure()
-
-
-trace1 = go.Scatter(
-    visible=True,
-    line=dict(color="orange", width=3),
-    name="Noise",
-    x=np.arange(0, 10, 0.01),
-    y=norm.pdf(np.arange(0, 10, 0.01), 4, 1.4),
-)
-
-trace2 = go.Scatter(
-    name="Target", line=dict(width=3), x=np.arange(0, 10, 0.01), y=norm.pdf(np.arange(0, 10, 0.01), 7, 1)
-)
-
-fig.add_trace(trace1)
-
-fig.add_trace(trace2)
-
-"""
-# Add traces, one for each slider step
-for step in np.arange(0, 5, 0.1):
-    fig.add_trace(
-        go.Scatter(
-            visible=False,
-            line=dict(color="#00CED1", width=3),
-            name="𝜈 = " + str(step),
-            x=np.arange(0, 10, 0.01),
-            y=norm.pdf(np.arange(0, 10, 0.01), step, 1)))
+if st.session_state["button1"] or st.session_state["button2"]:
+    if st.session_state["button1"]:
+        st.warning("""
+        Indeed wasting food is a big problem.
+        But thinking about your financial situation, poison one of your
+        costumers will probably ruin you. So i stick to option 2
+        """)
+    if st.session_state["button2"]:
+        st.success("""
+        Yes correctly. 
+        If you think about poisoning one of your costumers,
+        this will probably lead to financial ruin.
+        """)
     
-    fig.add_trace(
-        go.Scatter(
-            x=np.arange(0, 10, 0.01),
-            y=norm.pdf(np.arange(0, 10, 0.01), 7, 1)))
+    st.markdown("""
+    Ok now we know, making a prediction that bad food is good, 
+    is actually worse than predicting good food to be gone bad.
+
+    But what exactly does it have to do with loss?
+
+    Recapping what our classifier need's to do, we try to minimize the Error Rate $ER$ from before.
+    Now we got different cases, one which is of course not that good if a misclassification takes place
+    and :red[one which will definitely ruin our career as shop owner].
+
+    Now the $ER$ just gave us information regarding misclassification, but did not take into account the severity of a misclassification.
+
+    That's where the loss get's it role. The loss is nothing but a weighting of the different terms added up during calculation of the $ER$.
+
+    So constructing the loss we can start with creating a loss matrix
+    """)
+
+    st.latex(r"""
+    
+    l_{ij} = l(\^{\omega} = \omega_i , \omega = \omega_i) \geq 0 \\
+    \left[l_{ij}\right] \in \R_+^{c\times c}
+    
+    """)
+
+    st.markdown(r"""
+    As you can see the dimension of the Loss matrix is the same as of our confusion matrix.
+    Now what elements do we put onto our matrix?
+    So first of all, the diagonal elements can have a 0. The reason is that correctly classified predictions are on the diagonal and we don't want to put penalty on this.
+    But what about the other two elements?
+    Now as already mentioned:
+    - predicting good food as bad is not that harmful. We give it a loss of $l_{21} = 1$
+    - predicting bad food as good however can ruin us. Let's put a huge penalty on this case $l_{12} = 10$
+
+    Therefore we get the following loss matrix:
+    """)
+
+    st.latex(r"""
+    \left[
+    \begin{array}{cc}
+    0 & 10 \\
+    1 & 0
+
+    \end{array}
+    \right]
+    """)
+
+    st.markdown("""Easy, now the last step to calculate our weighted error rate is quite similar as before. Just iterate over all wrongly classified elements, multiply with the loss and add everything together""")
+    st.latex(r"""
+    BR = \sum \sum_{i\neq j} l_{ij} P_{ij}
+    """)
+
+    st.markdown("""Amazing! We came to the point where we did a small modification, which can have a huge impact on our carefree living as shop owner!
+    This weighted loss by the way is called :red[Bayesian risk]""")
+
+    st.markdown("---")
+
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+    '''
+
+
+    
         
-    
+    X_AXIS = np.arange(-20, 20, 0.001)
 
-# Make 10th trace visible
-fig.data[10].visible = True
+    mean_1 = st.slider("Mean of Orange graph", 0.25, -5.0, 5.0)
+    variance_1 = st.slider("Variance of orange graph", 2.0, 2.0, 6.0)
+    h_1 = norm.pdf(X_AXIS, mean_1, variance_1)
 
-# Create and add slider
-steps = []
-for i in range(len(fig.data)):
-    step = dict(
-        method="update",
-        args=[{"visible": [False] * len(fig.data)},
-              {"title": "Slider switched to step: " + str(i)}],  # layout attribute
+    mean_fixed = 5.0
+    variance_fixed = 1.5
+    h_2 = norm.pdf(X_AXIS, mean_fixed, variance_fixed)
+
+    fig, ax = plt.subplots()
+    ax.plot(X_AXIS, h_1, c="orange")
+    ax.plot(X_AXIS, h_2, c="b")
+    idx = np.argwhere(np.diff(np.sign(h_2 - h_1))).flatten()
+    if len(idx) <= 1:
+        idx = np.append(idx, 31511)
+
+    max_val = np.max(np.maximum(h_1, h_2))
+    plt.fill_between(
+        X_AXIS[idx[0] : idx[1]],
+        h_1[idx[0] : idx[1]],
+        h_2[idx[0] : idx[1]],
+        hatch="\\",
+        alpha=0.2,
+        linewidth=0.1,
+        facecolor="b",
+        edgecolor="b",
     )
-    step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
-    steps.append(step)
+    plt.fill_between(
+        X_AXIS[idx[0] : idx[1]],
+        np.zeros_like(h_1[idx[0] : idx[1]]),
+        h_1[idx[0] : idx[1]],
+        hatch="\\",
+        alpha=0.2,
+        linewidth=0.1,
+        facecolor="orange",
+        edgecolor="orange",
+    )
 
-sliders = [dict(
-    active=10,
-    currentvalue={"prefix": "Frequency: "},
-    pad={"t": 50},
-    steps=steps
-)]
+    plt.legend([r"$H_0$", r"$H_1$", r"$P_{D}$", r"$P_{FA}$"])
+    ax.vlines(X_AXIS[idx], -0.01, max_val, color="r", linestyles="dashed", linewidth=0.3)
+    st.write(fig)
 
-fig.update_layout()
 
-"""
-fig.update_layout()
-st.write(fig)
+    import numpy as np
+    import plotly.graph_objects as go
+
+    # Create figure
+    fig = go.Figure()
+
+
+    trace1 = go.Scatter(
+        visible=True,
+        line=dict(color="orange", width=3),
+        name="Noise",
+        x=np.arange(0, 10, 0.01),
+        y=norm.pdf(np.arange(0, 10, 0.01), 4, 1.4),
+    )
+
+    trace2 = go.Scatter(
+        name="Target", line=dict(width=3), x=np.arange(0, 10, 0.01), y=norm.pdf(np.arange(0, 10, 0.01), 7, 1)
+    )
+
+    fig.add_trace(trace1)
+
+    fig.add_trace(trace2)
+
+    """
+    # Add traces, one for each slider step
+    for step in np.arange(0, 5, 0.1):
+        fig.add_trace(
+            go.Scatter(
+                visible=False,
+                line=dict(color="#00CED1", width=3),
+                name="𝜈 = " + str(step),
+                x=np.arange(0, 10, 0.01),
+                y=norm.pdf(np.arange(0, 10, 0.01), step, 1)))
+        
+        fig.add_trace(
+            go.Scatter(
+                x=np.arange(0, 10, 0.01),
+                y=norm.pdf(np.arange(0, 10, 0.01), 7, 1)))
+            
+        
+
+    # Make 10th trace visible
+    fig.data[10].visible = True
+
+    # Create and add slider
+    steps = []
+    for i in range(len(fig.data)):
+        step = dict(
+            method="update",
+            args=[{"visible": [False] * len(fig.data)},
+                {"title": "Slider switched to step: " + str(i)}],  # layout attribute
+        )
+        step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
+        steps.append(step)
+
+    sliders = [dict(
+        active=10,
+        currentvalue={"prefix": "Frequency: "},
+        pad={"t": 50},
+        steps=steps
+    )]
+
+    fig.update_layout()
+
+    """
+    fig.update_layout()
+    st.write(fig)
+    '''
