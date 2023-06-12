@@ -18,6 +18,7 @@ from utils.utils import confusion_matrix_plot
 import streamlit as st
 
 sns.set_theme()
+np.random.seed(42)
 
 
 #######################################################################################
@@ -120,6 +121,50 @@ st.markdown(
 For this we calculate the so called :red[a posterior $P(\omega | x)$] using bayes theorem.
 """
 )
+
+
+
+
+st.markdown(
+    r"""
+    Since we're dealing with a continuous feature space, we need to adapt bayes theroem a little bit.
+
+    $$
+    P(\omega|x) = \frac{P(x)}{f(x)}f(x|\omega)
+    $$
+    where $f(x) = \sum_i^C f(x|\omega_i)$ is the :red[evidence] given as probability density function
+    and $f(x|\omega)~\sim~\mathcal{N}(\mu_c, C_c)$ is the :red[class conditional likelihood].
+    """)
+
+st.markdown(
+    """
+    Now, since working with continuous probability density functions is quite unhandy, we're going to bin the given probability density functions.
+    """)
+seabass_mean, seabass_var = 30, 10
+salmon_mean, salmon_var = 80, 25
+X_AXIS = np.arange(0, 150, 0.002)
+
+seabass_samples = np.random.normal(seabass_mean, seabass_var, 100)
+salmon_samples = np.random.normal(salmon_mean, salmon_var, 100)
+seabass_dis = norm.pdf(X_AXIS, seabass_mean, seabass_var)
+salmon_dis = norm.pdf(X_AXIS, salmon_mean, salmon_var)
+
+fig, ax = plt.subplots()
+
+ax.set_xlabel("Length in [cm]")
+ax.set_ylabel(r"Likelihood $P(x | \omega)$")
+
+e  = sns.histplot(x=seabass_samples, stat="probability", kde=True, binwidth=5, color="b")
+sns.histplot(x=salmon_samples, stat="probability", kde=True, binwidth=5, color="r")
+plt.legend(["Sea bass", "Salmon"])
+st.pyplot(fig)
+
+st.info(
+    r"""
+    As you can probably see, the density functions are not perfectly gaussian even though the examples are sampled from a gaussian distribution.
+    This is due not enough samples + quantization from the binning process.
+    """)
+
 
 
 st.markdown("---")
