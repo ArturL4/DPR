@@ -7,3 +7,4 @@ pandas
 scipy
 seaborn
 streamlit_lottie
+scikit-learn

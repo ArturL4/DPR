@@ -15,41 +15,9 @@ st.header("Supervised learnings")
 
 st.markdown("---")
 
-st.subheader("Datasets")
-
-st.markdown("We want to evaluate different classifiers on different datasets. For this we first artificially generate some datasets.")
 colors=["red", "blue"]
 cmap_custom = ListedColormap(colors)
 
-
-dataset = st.radio(
-    r'**Choose a dataset**',
-    options=["Two moons", "Four parallel distributions", "Four gaussian distributions", "Circular distribution"]
-    )
-
-if dataset == "Two moons":
-    x_train, y_train , x_test, y_test = datasets.two_moons_dataset(1000, 0.9)
-elif dataset == "Four parallel distributions":
-    x_train, y_train , x_test, y_test = datasets.four_parallel_dataset(1000, 0.9)
-elif dataset == "Four gaussian distributions":
-    x_train, y_train , x_test, y_test = datasets.four_gaussian_dataset(1000, 0.9)
-else:
-    x_train, y_train , x_test, y_test = datasets.circular_dataset(1000, 0.9)
-
-
-fig, ax = plt.subplots(figsize=(15, 8))
-ax.set_title(dataset, size=20)
-ax.scatter(x_train[:, 0], x_train[:, 1], c=y_train, cmap=cmap_custom)
-st.pyplot(fig)
-
-
-st.markdown(
-    """
-    Ok now after we've generated our data, we want to evalaute 3 different classifiers on them.
-    This shall give us an intuition where the limitations of the classifiers are.
-
-    But let's start with some theory before applying those classifiers.
-    """)
 
 st.markdown("---")
 st.markdown(r"**Nearest Mean Classifier**")
@@ -91,7 +59,7 @@ st.markdown(
     We extend our classical euclidean distance to consider covariances as well, which results in the so called :red[Mahalanobis Distance]
 
     $$
-    D_{Maha} = \sqrt{(x_n - \mu_j)^T C(x_n - \mu_j)^T}
+    D_{Maha} = \sqrt{(x_n - \mu_j) C(x_n - \mu_j)^T}
     $$
 
     But let's just visualize a bit
@@ -108,11 +76,62 @@ def one_sample_creation(mu1, sigma1, mu2, sigma2, size=100):
     x_sample = np.concatenate([x_sample_1, x_sample_2])
     return x_sample, y_sample
 
-x_sample, y_sample = one_sample_creation(2, 1, 4, 1, 100)
+x_sample, y_sample = one_sample_creation(2, 1, 6, 2, 1000)
 
 fig, ax = plt.subplots(figsize=(15, 8))
-ax.vlines(x_sample[y_sample == 0], ymin=-0.01, ymax=0.01, colors="r")
-ax.vlines(x_sample[y_sample == 1], ymin=-0.01, ymax=0.01, colors="b")
+sns.kdeplot(data= [x_sample[y_sample == 1],x_sample[y_sample == 0]], fill=True, palette=["dodgerblue", "lightcoral"], alpha=0.1)
+ax.vlines(x=x_sample[y_sample == 1], ymin=-0.001, ymax=0.002, colors="dodgerblue")
+ax.vlines(x=x_sample[y_sample == 0], ymin=-0.001, ymax=0.002, colors="lightcoral")
+ax.vlines(x=3.85, ymin=-0.005, ymax=0.15, colors="darkgreen")
+plt.legend(["Class 1", "Class 2", "New sample"])
+st.pyplot(fig)
+
+st.markdown(
+    r"""
+    We got two distributions. You might see, that the likelihood for the given sample is higher for class 1 than for class 2.
+    So by intuition one could say, that the new sample should be assigned to class 1.
+
+    But for the Nearest mean classifier we need only consider the mean of our given samples. So let's compute them first.
+    """)
+
+class_1_mean = np.mean(x_sample[y_sample == 0])
+class_2_mean = np.mean(x_sample[y_sample == 1])
+
+st.markdown(fr"Mean for class 1: :red[{class_1_mean:.2f}]")
+st.markdown(fr"Mean for class 2: :blue[{class_2_mean:.2f}]")
+
+st.markdown("---")
+###################################
+st.markdown(r"**K-nearest mean classifier**")
+st.markdown("---")
+###################################
+
+st.markdown(r"**Gaussian mixture classifier**")
+st.markdown("---")
+###################################
+
+
+st.markdown(r"**Application**")
+st.markdown(r"Now after getting all the theory input, we want to investigate the classifiers performance on different datasets.")
+st.markdown(r"For this we artifically generate some datasets and take a look on the decision boundaries and the confusion matrix. Just choose the datasets.")
+
+dataset = st.radio(
+    r'**Choose a dataset**',
+    options=["Two moons", "Four parallel distributions", "Four gaussian distributions", "Circular distribution"]
+    )
+
+if dataset == "Two moons":
+    x_train, y_train , x_test, y_test = datasets.two_moons_dataset(1000, 0.9)
+elif dataset == "Four parallel distributions":
+    x_train, y_train , x_test, y_test = datasets.four_parallel_dataset(1000, 0.9)
+elif dataset == "Four gaussian distributions":
+    x_train, y_train , x_test, y_test = datasets.four_gaussian_dataset(1000, 0.9)
+else:
+    x_train, y_train , x_test, y_test = datasets.circular_dataset(1000, 0.9)
+
+fig, ax = plt.subplots(figsize=(15, 8))
+ax.set_title(dataset, size=20)
+ax.scatter(x_train[:, 0], x_train[:, 1], c=y_train, cmap=cmap_custom)
 st.pyplot(fig)
 
 
